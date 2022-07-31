@@ -12,7 +12,7 @@ class Settings:
     def __init__(self, settings_module=None):
         
 
-        self.SETTINGS_MODULE = settings_module or os.environ.get(ENVIRONMENT_VARIABLE) or "LOREPO.conf.pro"
+        self.SETTINGS_MODULE = settings_module or os.environ.get(ENVIRONMENT_VARIABLE) or "lorepo.conf.pro"
 
         mod = importlib.import_module(self.SETTINGS_MODULE)
 
