@@ -172,10 +172,10 @@ def item_detail(name):
     except sqlalchemy.exc.NoResultFound:
         return ("{'errors': 'Not found'}", 404)
 
-    if key != item.key:
-        return ('{"errors": "Unauthorized"}', 403)
-
     if request.method == "POST":
+        if key != item.key:
+            return ('{"errors": "Unauthorized"}', 403)
+
         data = request.json
         if "deps" in data:
             _deps = data.pop("deps")
