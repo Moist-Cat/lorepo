@@ -128,6 +128,8 @@ def catalog():
 
         app.objects.add(item)
 
+        return jsonify(item.as_dict())
+
     args = {"page", "tags", "name"}
     args = get_args(request, args)
 
