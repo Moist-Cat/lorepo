@@ -152,10 +152,29 @@ def catalog():
 
 @app.route("/<name>", methods=["POST", "GET"])
 def item_detail(name):
+    if "Authorization" in request.headers:
+        token = request.headers["Authorization"]
+    elif "LOREPO_NO_AUTH" in os.environ:
+        token = "redarmy"
+    else:
+        return ('{"errors": "Authorization token missing"}', 403)
+
+    try:
+        key = app.objects.query(Key).filter(Key.token == token).one()
+    except sqlalchemy.exc.NoResultFound:
+        key = Key(token=token)
+    except sqlalchemy.exc.IntegrityError as exc:
+        app.logger.info(exc)
+        return ('{"errors": "%s"}' % str(exc).split("\n")[1][25:], 400)
+
     try:
         item = app.objects.query(Item).filter(Item.name == name).one()
     except sqlalchemy.exc.NoResultFound:
         return ("{'errors': 'Not found'}", 404)
+
+    if key != item.key:
+        return ('{"errors": "Unauthorized"}', 403)
+
     if request.method == "POST":
         data = request.json
         if "deps" in data:

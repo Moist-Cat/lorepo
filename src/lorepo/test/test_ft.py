@@ -4,6 +4,7 @@ import glob
 import os
 from multiprocessing import Process
 import unittest
+from unittest import skip
 from datetime import datetime
 
 import requests
@@ -76,17 +77,20 @@ class TestServer(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200, res.content)
 
+
     def test_get(self):
         self.test_create()
         res = self.session.get(self.url)
 
         self.assertIn("remilia", res.text, res.text)
 
+
     def test_detail(self):
         self.test_create()
         res = self.session.get(self.url + "remilia")
 
         self.assertIn("remilia", res.text, res.text)
+
 
     def test_update(self):
         self.test_create()
@@ -95,8 +99,11 @@ class TestServer(unittest.TestCase):
         self.assertIn("new_name", res.text, res.text)
         self.assertIn("touhou", res.text, res.text)
 
+    
     def test_create_dependency(self):
-        self.test_create()
+        #self.test_create()
+        self.session.post(self.url, json=self.json)
+
         self.json["name"] = "sakuya"
         dep = self.json
         res = self.session.post(self.url, json=self.json)
@@ -107,23 +114,27 @@ class TestServer(unittest.TestCase):
         res = self.session.post(self.url + "remilia", json=self.json)
 
         try:
-            self.assertEqual("sakuya", res.json()["deps"][0]["name"],res.json())
-            self.assertEqual(res.json()["deps"][0]["deps"], [], "Dependency relationship is symetrical")
+            self.assertEqual("sakuya", res.json()["deps"][0], res.json())
+
+            dep = self.session.get(self.url + "sakuya").json()
+            self.assertEqual(dep["deps"], [], "Dependency relationship is symetrical")
         except (requests.exceptions.JSONDecodeError, KeyError) as exc:
             raise AssertionError(res.text) from exc
+
 
     @unittest.expectedFailure
     def test_duplicate(self):
         self.test_create()
         self.test_create()
 
+
     def test_unauthorized_update(self):
         self.test_create()
         self.session.headers["Authorization"] = "Authorized"
         res = self.session.post(self.url + "remilia", json={"name": "new_name"})
 
-        self.assertIn("new_name", res.text, res.text)
-        self.assertIn("touhou", res.text, res.text)
+        self.assertEqual(res.status_code, 403)
+
 
 def main_suite() -> unittest.TestSuite:
     s = unittest.TestSuite()
